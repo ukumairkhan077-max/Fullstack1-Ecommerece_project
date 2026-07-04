@@ -1,0 +1,10 @@
+.search-bar { display: flex; align-items: center; border: 1px solid #ddd; border-radius: 7px; padding: 0 10px; height: 38px; background: #fafafa; gap: 6px; transition: border-color 0.2s; }
+.search-bar:focus-within { border-color: #111; background: #fff; }
+.sb-icon { font-size: 13px; color: #aaa; flex-shrink: 0; }
+.sb-input { border: none; outline: none; background: transparent; font-size: 13px; color: #333; width: 180px; }
+.sb-clear { border: none; background: none; cursor: pointer; color: #aaa; font-size: 13px; padding: 0; line-height: 1; }
+.sb-clear:hover { color: #555; }
+
+@media (max-width: 480px) {
+  .sb-input { width: 100%; min-width: 0; }
+}

@@ -1,0 +1,5 @@
+.breadcrumb { padding: 16px 0 20px; font-size: 13px; color: #888; }
+.bc-link { color: #888; text-decoration: none; transition: color 0.15s; }
+.bc-link:hover { color: #111; }
+.bc-sep { color: #ccc; margin: 0 2px; }
+.bc-cur { color: #111; font-weight: 600; }
