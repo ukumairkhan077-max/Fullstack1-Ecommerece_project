@@ -28,7 +28,7 @@ function App() {
         <UserProvider>
           <CartProvider>
             <OrderProvider>
-              <BrowserRouter>
+              <BrowserRouter basename={import.meta.env.BASE_URL}>
                 <CartDrawer />
                 <Routes>
                   <Route path="/"                    element={<Home />} />
