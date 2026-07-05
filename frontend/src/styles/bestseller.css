@@ -1,0 +1,258 @@
+/* ===========================
+   BEST SELLER SECTION
+=========================== */
+
+.bestSeller{
+    width:100%;
+    padding:45px 8%;
+    background:#fff;
+}
+
+.bestSellerTitle{
+    text-align:center;
+    font-size:2.3rem;
+    font-weight:700;
+    margin-bottom:35px;
+    color:#222;
+}
+
+.bestSellerContainer{
+    display:flex;
+    justify-content:center;
+    align-items:flex-start;
+    gap:45px;
+}
+
+/* ===========================
+        LEFT SECTION
+=========================== */
+
+.leftSection{
+    display:flex;
+    gap:15px;
+}
+
+.thumbnailContainer{
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+}
+
+.thumbnail{
+    width:60px;
+    height:75px;
+    object-fit:cover;
+    cursor:pointer;
+    border:2px solid transparent;
+    transition:.3s;
+}
+
+.thumbnail:hover{
+    border-color:black;
+}
+
+.activeThumbnail{
+    border-color:black;
+}
+
+.mainImageContainer{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+}
+
+.mainImage{
+    width:380px;
+    height:500px;
+    object-fit:cover;
+    border-radius:8px;
+}
+
+/* ===========================
+        RIGHT SECTION
+=========================== */
+
+.rightSection{
+    width:430px;
+}
+
+.rightSection h1{
+    font-size:1.9rem;
+    color:#222;
+    margin-bottom:15px;
+}
+
+.price{
+    display:flex;
+    align-items:center;
+    gap:15px;
+    margin-bottom:18px;
+}
+
+.currentPrice{
+    font-size:1.9rem;
+    font-weight:bold;
+}
+
+.oldPrice{
+    color:#888;
+    text-decoration:line-through;
+    font-size:1.1rem;
+}
+
+.description{
+    color:#666;
+    line-height:1.6;
+    margin-bottom:22px;
+}
+
+/* ===========================
+        OPTIONS
+=========================== */
+
+.optionGroup{
+    margin-bottom:18px;
+}
+
+.optionGroup h4{
+    margin-bottom:10px;
+    color:#222;
+}
+
+/* Colors */
+
+.colors{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+}
+
+.colorBtn{
+    padding:8px 16px;
+    border:1px solid #ccc;
+    background:#fff;
+    cursor:pointer;
+    transition:.3s;
+}
+
+.colorBtn:hover,
+.activeColor{
+    background:#000;
+    color:#fff;
+}
+
+/* Sizes */
+
+.sizes{
+    display:flex;
+    gap:10px;
+}
+
+.sizeBtn{
+    width:45px;
+    height:45px;
+    border:1px solid #ccc;
+    background:#fff;
+    cursor:pointer;
+    transition:.3s;
+}
+
+.sizeBtn:hover,
+.activeSize{
+    background:#000;
+    color:#fff;
+}
+
+/* ===========================
+        QUANTITY
+=========================== */
+
+.quantityBox{
+    display:flex;
+    width:130px;
+    border:1px solid #ccc;
+}
+
+.quantityBox button{
+    width:40px;
+    height:40px;
+    border:none;
+    background:#fff;
+    cursor:pointer;
+    font-size:18px;
+}
+
+.quantityBox span{
+    flex:1;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+}
+
+/* ===========================
+     CHARACTERISTICS
+=========================== */
+
+.characteristics{
+    margin-top:20px;
+    margin-bottom:25px;
+}
+
+.characteristics h3{
+    font-size:1.2rem;
+    margin-bottom:15px;
+}
+
+.characteristicRow{
+    display:flex;
+    justify-content:space-between;
+    padding:8px 0;
+    border-bottom:1px solid #eee;
+}
+
+.characteristicRow span:first-child{
+    color:#666;
+}
+
+.characteristicRow span:last-child{
+    font-weight:600;
+    color:#222;
+}
+
+/* ===========================
+       ADD TO CART
+=========================== */
+
+.cartBtn{
+    width:100%;
+    padding:15px;
+    background:#000;
+    color:#fff;
+    border:none;
+    cursor:pointer;
+    font-size:1rem;
+    letter-spacing:1px;
+    transition:.3s;
+}
+
+.cartBtn:hover{
+    background:#333;
+}
+
+/* ================= RESPONSIVE ================= */
+@media (max-width: 992px) {
+    .bestSellerContainer { flex-direction: column; align-items: center; gap: 30px; }
+    .rightSection { width: 100%; max-width: 500px; }
+    .leftSection { width: 100%; max-width: 500px; justify-content: center; }
+    .mainImage { width: 100%; max-width: 380px; height: auto; aspect-ratio: 3/4; }
+}
+
+@media (max-width: 576px) {
+    .bestSeller { padding: 30px 5%; }
+    .bestSellerTitle { font-size: 1.7rem; margin-bottom: 24px; }
+    .leftSection { gap: 10px; }
+    .thumbnail { width: 45px; height: 58px; }
+    .rightSection h1 { font-size: 1.4rem; }
+    .currentPrice { font-size: 1.4rem; }
+    .sizeBtn { width: 40px; height: 40px; }
+}

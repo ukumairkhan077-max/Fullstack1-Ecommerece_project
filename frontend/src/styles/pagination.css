@@ -1,0 +1,8 @@
+.pagination { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 36px; flex-wrap: wrap; }
+.pag-btn { border: 1px solid #ddd; background: #fff; color: #333; padding: 8px 18px; border-radius: 7px; font-size: 13px; cursor: pointer; transition: background 0.18s, color 0.18s, border-color 0.18s; }
+.pag-btn:hover:not(:disabled) { background: #111; color: #fff; border-color: #111; }
+.pag-btn:disabled { opacity: 0.38; cursor: not-allowed; }
+.pag-pages { display: flex; gap: 4px; }
+.pag-page { width: 34px; height: 34px; border: 1px solid #ddd; background: #fff; color: #333; border-radius: 7px; font-size: 13px; cursor: pointer; transition: all 0.18s; }
+.pag-page:hover:not(.active) { border-color: #111; color: #111; }
+.pag-page.active { background: #111; color: #fff; border-color: #111; font-weight: 700; }

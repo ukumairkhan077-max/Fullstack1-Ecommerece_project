@@ -1,0 +1,152 @@
+/* ==========================
+      YOU MAY ALSO LIKE
+========================== */
+
+.youMayLike {
+    width: 100%;
+    padding: 70px 8%;
+    background: #fff;
+}
+
+.youMayLike h2 {
+    text-align: center;
+    font-size: 2.3rem;
+    margin-bottom: 60px;
+    color: #222;
+    font-weight: 700;
+}
+
+/* ==========================
+      CATEGORY
+========================== */
+
+.categorySection {
+    margin-bottom: 70px;
+}
+
+.categorySection h3 {
+    font-size: 1.8rem;
+    margin-bottom: 25px;
+    color: #222;
+}
+
+/* ==========================
+      HORIZONTAL SLIDER
+========================== */
+
+.productSlider {
+    display: flex;
+    gap: 25px;
+    overflow-x: auto;
+    scroll-behavior: smooth;
+    padding-bottom: 15px;
+}
+
+.productSlider::-webkit-scrollbar {
+    height: 8px;
+}
+
+.productSlider::-webkit-scrollbar-thumb {
+    background: #bbb;
+    border-radius: 10px;
+}
+
+.productSlider::-webkit-scrollbar-track {
+    background: #eee;
+}
+
+/* ==========================
+      PRODUCT CARD
+========================== */
+
+.productCard {
+    min-width: 240px;
+    max-width: 240px;
+    background: white;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: .3s ease;
+    box-shadow: 0 3px 12px rgba(0,0,0,.08);
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.productCard:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 30px rgba(0,0,0,.15);
+}
+
+/* ==========================
+      IMAGE
+========================== */
+
+.imageBox {
+    width: 100%;
+    height: 270px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #fafafa;
+    padding: 25px;
+}
+
+.imageBox img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    transition: .3s;
+}
+
+.productCard:hover img {
+    transform: scale(1.08);
+}
+
+/* ==========================
+      PRODUCT TITLE
+========================== */
+
+.productCard h4 {
+    font-size: 15px;
+    padding: 18px 15px 8px;
+    color: #222;
+    line-height: 1.5;
+    height: 70px;
+    overflow: hidden;
+}
+
+/* ==========================
+      PRICE
+========================== */
+
+.productCard p {
+    padding: 0 15px 18px;
+    font-size: 20px;
+    font-weight: bold;
+    color: black;
+}
+
+/* ==========================
+      HOVER EFFECT
+========================== */
+
+.productCard:hover p {
+    color: #0d6efd;
+}
+
+/* ================= RESPONSIVE ================= */
+@media (max-width: 768px) {
+    .youMayLike { padding: 46px 5%; }
+    .youMayLike h2 { font-size: 1.8rem; margin-bottom: 36px; }
+    .categorySection { margin-bottom: 46px; }
+    .categorySection h3 { font-size: 1.4rem; margin-bottom: 18px; }
+    .productCard { min-width: 190px; max-width: 190px; }
+    .imageBox { height: 210px; padding: 18px; }
+}
+
+@media (max-width: 480px) {
+    .youMayLike h2 { font-size: 1.5rem; }
+    .productCard { min-width: 160px; max-width: 160px; }
+    .imageBox { height: 170px; padding: 14px; }
+    .productCard h4 { font-size: 13px; padding: 14px 12px 6px; height: 58px; }
+    .productCard p { font-size: 16px; padding: 0 12px 14px; }
+}

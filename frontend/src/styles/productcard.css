@@ -1,0 +1,50 @@
+.pc-link { text-decoration: none; color: inherit; display: block; }
+.pc { border: 1px solid #ebebeb; border-radius: 10px; overflow: hidden; background: #fff; transition: box-shadow 0.22s, transform 0.22s; }
+.pc:hover { box-shadow: 0 8px 28px rgba(0,0,0,.1); transform: translateY(-3px); }
+.pc-img-wrap { position: relative; width: 100%; aspect-ratio: 3/4; overflow: hidden; background: #f7f7f7; }
+.pc-img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.38s ease; display: block; }
+.pc:hover .pc-img { transform: scale(1.06); }
+.pc-badge { position: absolute; top: 10px; left: 10px; background: #e5391c; color: #fff; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 4px; }
+.pc-out { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,.65); color: #fff; font-size: 11px; padding: 4px 10px; border-radius: 4px; white-space: nowrap; }
+.pc-body { padding: 12px 14px 14px; }
+.pc-brand { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: #999; margin-bottom: 4px; }
+.pc-name { font-size: 13px; font-weight: 600; color: #222; margin-bottom: 6px; line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.stars { display: flex; align-items: center; gap: 1px; margin-bottom: 8px; }
+.star { font-size: 13px; color: #ddd; }
+.star.filled { color: #f59e0b; }
+.rating-num { font-size: 11px; color: #999; margin-left: 4px; }
+.pc-price { display: flex; align-items: center; gap: 8px; }
+.pc-final { font-size: 15px; font-weight: 700; color: #111; }
+.pc-old { font-size: 13px; color: #aaa; text-decoration: line-through; }
+
+@media (max-width: 480px) {
+  .pc-body { padding: 9px 10px 11px; }
+  .pc-name { font-size: 12px; }
+  .pc-final { font-size: 13px; }
+  .pc-old { font-size: 11px; }
+  .pc-brand { font-size: 10px; }
+  .pc-view-text { font-size: 11px; padding: 6px 12px; }
+}
+
+/* Hover overlay */
+.pc-hover-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.28);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+.pc:hover .pc-hover-overlay { opacity: 1; }
+.pc-view-text {
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: rgba(0,0,0,0.5);
+  padding: 8px 18px;
+  border-radius: 4px;
+}
