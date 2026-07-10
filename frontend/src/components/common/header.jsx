@@ -3,14 +3,31 @@ import twitter   from "../../assets/images/twitter.svg";
 import facebook  from "../../assets/images/facebook.svg";
 import instagram from "../../assets/images/instagram.svg";
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useCart } from "../../context/CartContext";
+import { useAuth } from "../../context/AuthContext";
 
 function Header() {
   const { totalQuantity, openDrawer } = useCart();
+  const { isAuthenticated, user, logout } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
+  const navigate = useNavigate();
 
   const closeMenu = () => setMenuOpen(false);
+
+  const handleAccountClick = () => {
+    closeMenu();
+    if (isAuthenticated) {
+      logout();
+      navigate("/login");
+    } else {
+      navigate("/login");
+    }
+  };
+
+  const accountLabel = isAuthenticated
+    ? `👋 ${(user?.name || "Account").split(" ")[0]} (Logout)`
+    : "👤 Account";
 
   return (
     <>
@@ -53,7 +70,9 @@ function Header() {
           </ul>
           <div className="mobile-menu-actions">
             <Link to="/admin" className="admin-btn" onClick={closeMenu}>Admin</Link>
-            <Link to="/login" className="profilebtn" onClick={closeMenu}>👤 Account</Link>
+            <button type="button" className="profilebtn profilebtn--link" onClick={handleAccountClick}>
+              {accountLabel}
+            </button>
           </div>
         </nav>
 
@@ -62,7 +81,14 @@ function Header() {
         <div className="header-actions">
           <Link to="/admin" className="admin-btn admin-btn--desktop">Admin</Link>
 
-          <Link to="/login" className="profilebtn profilebtn--desktop">👤</Link>
+          <button
+            type="button"
+            className="profilebtn profilebtn--desktop"
+            onClick={handleAccountClick}
+            title={isAuthenticated ? `Logged in as ${user?.name || "you"} — click to log out` : "Login / Register"}
+          >
+            {isAuthenticated ? "👋" : "👤"}
+          </button>
 
           {/* Cart icon with badge */}
           <button className="cart-icon-btn" onClick={openDrawer} aria-label="Open cart">

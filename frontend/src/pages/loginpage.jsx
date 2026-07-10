@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate, Navigate } from "react-router-dom";
+import { useNavigate, useLocation, Navigate } from "react-router-dom";
 import Header from "../components/common/header";
 import Footer from "../components/common/footer";
 import Loginpicture from "../assets/images/login.webp";
@@ -10,12 +10,14 @@ import "../styles/loginregister.css";
 function LoginPage() {
   const { isAuthenticated, login, loading } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const redirectTo = location.state?.from || "/";
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
-  if (isAuthenticated) return <Navigate to="/" replace />;
+  if (isAuthenticated) return <Navigate to={redirectTo} replace />;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -26,7 +28,7 @@ function LoginPage() {
       setError(result.message || "Invalid email or password.");
       return;
     }
-    navigate("/");
+    navigate(redirectTo, { replace: true });
   };
 
   return (

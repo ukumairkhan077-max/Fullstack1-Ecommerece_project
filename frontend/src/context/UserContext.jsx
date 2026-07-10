@@ -82,6 +82,15 @@ export function UserProvider({ children }) {
     setUsers((prev) => prev.map((u) => (u.id === id ? { ...u, role } : u)));
   }, []);
 
+  const updateUser = useCallback(async (id, data) => {
+    if (backendMode.current) {
+      const updated = await api.updateUser(id, data);
+      setUsers((prev) => prev.map((u) => (u.id === id ? { ...u, ...normalizeBackendUser(updated) } : u)));
+      return;
+    }
+    setUsers((prev) => prev.map((u) => (u.id === id ? { ...u, ...data } : u)));
+  }, []);
+
   const deleteUser = useCallback(async (id) => {
     if (backendMode.current) {
       await api.deleteUser(id);
@@ -91,7 +100,7 @@ export function UserProvider({ children }) {
 
   return (
     <UserContext.Provider
-      value={{ users, loading, refreshUsers, addUser, updateUserRole, deleteUser }}
+      value={{ users, loading, refreshUsers, addUser, updateUser, updateUserRole, deleteUser }}
     >
       {children}
     </UserContext.Provider>

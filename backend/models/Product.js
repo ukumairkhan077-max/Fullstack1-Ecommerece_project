@@ -1,10 +1,14 @@
 const mongoose = require("mongoose");
 
-// A product can have multiple images, each with its own alt text
+// A product can have multiple images, each with its own alt text.
+// `publicId` is Cloudinary's identifier for the uploaded file — it's what
+// lets us delete the old image from Cloudinary when it gets replaced
+// (see routes/productAdminRoutes.js).
 const imageSchema = new mongoose.Schema(
   {
     url: { type: String, required: true },
     altText: { type: String, default: "" },
+    publicId: { type: String, default: null },
   },
   { _id: false } // images don't need their own _id
 );

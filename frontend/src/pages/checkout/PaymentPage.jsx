@@ -45,7 +45,7 @@ function PaymentPage() {
 
   const activeMethod = PAYMENT_METHODS.find(m => m.id === method);
 
-  const finalizeOrder = (paymentMethod, transactionId) => {
+  const finalizeOrder = async (paymentMethod, transactionId) => {
     const items = cartItems.map(item => ({
       id: item.product.id,
       name: item.product.name || item.product.title,
@@ -56,17 +56,23 @@ function PaymentPage() {
       color: item.color,
     }));
 
-    createOrder({
-      items,
-      subtotal,
-      shipping,
-      total,
-      paymentMethod,
-      transactionId,
-      customer: `${checkoutInfo.firstName || ""} ${checkoutInfo.lastName || ""}`.trim() || "Guest",
-    });
-    clearCart();
-    navigate("/order-confirmation");
+    setProcessing(true);
+    try {
+      await createOrder({
+        items,
+        subtotal,
+        shipping,
+        total,
+        paymentMethod,
+        transactionId,
+        customer: `${checkoutInfo.firstName || ""} ${checkoutInfo.lastName || ""}`.trim() || "Guest",
+      });
+      await clearCart();
+      navigate("/order-confirmation");
+    } catch (err) {
+      setError(err.message || "Something went wrong finalizing your order. Please try again.");
+      setProcessing(false);
+    }
   };
 
   const handlePay = (e) => {
@@ -83,7 +89,6 @@ function PaymentPage() {
     // once a JazzCash / Easypaisa merchant account is wired up server-side.
     setTimeout(() => {
       const transactionId = `${method.toUpperCase()}-${Date.now()}`;
-      setProcessing(false);
       finalizeOrder(activeMethod.name, transactionId);
     }, 1400);
   };

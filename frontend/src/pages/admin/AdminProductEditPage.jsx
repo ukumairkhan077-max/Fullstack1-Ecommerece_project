@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useProducts } from "../../context/ProductContext";
+import api from "../../services/api";
 
 function AdminProductEditPage() {
   const { id } = useParams();
@@ -19,8 +20,10 @@ function AdminProductEditPage() {
     sizes: "",
     colors: "",
     imageUrl: "",
+    imagePublicId: "",
   });
   const [error, setError] = useState("");
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     if (existing) {
@@ -33,6 +36,7 @@ function AdminProductEditPage() {
         sizes: (existing.sizes || []).join(", "),
         colors: (existing.colors || []).join(", "),
         imageUrl: existing.images?.[0]?.url || "",
+        imagePublicId: existing.images?.[0]?.publicId || "",
       });
     }
   }, [existing]);
@@ -54,12 +58,30 @@ function AdminProductEditPage() {
     setError("");
   };
 
-  const handleImageUpload = (e) => {
+  // Tries to upload the image to Cloudinary via the real backend first
+  // (POST /api/upload). If that's not reachable (no backend, or Cloudinary
+  // isn't configured), falls back to a local base64 preview — same
+  // "hybrid" pattern used throughout this app so the admin panel stays
+  // usable without a backend.
+  const handleImageUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => setForm((prev) => ({ ...prev, imageUrl: reader.result }));
-    reader.readAsDataURL(file);
+
+    setUploading(true);
+    setError("");
+
+    try {
+      const result = await api.uploadImage(file);
+      setForm((prev) => ({ ...prev, imageUrl: result.url, imagePublicId: result.publicId }));
+    } catch {
+      // Fall back to a local, base64 preview (won't persist to Cloudinary,
+      // but keeps the admin panel usable without a backend/Cloudinary set up)
+      const reader = new FileReader();
+      reader.onload = () => setForm((prev) => ({ ...prev, imageUrl: reader.result, imagePublicId: "" }));
+      reader.readAsDataURL(file);
+    } finally {
+      setUploading(false);
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -80,7 +102,7 @@ function AdminProductEditPage() {
       sizes: form.sizes.split(",").map((s) => s.trim()).filter(Boolean),
       colors: form.colors.split(",").map((c) => c.trim()).filter(Boolean),
       images: form.imageUrl
-        ? [{ url: form.imageUrl, altText: form.name.trim() }]
+        ? [{ url: form.imageUrl, altText: form.name.trim(), publicId: form.imagePublicId || null }]
         : existing?.images || [],
       category: existing?.category || "Top Wear",
       gender: existing?.gender || "Men",
@@ -93,6 +115,10 @@ function AdminProductEditPage() {
       if (isNew) {
         await addProduct(payload);
       } else {
+        // The backend (routes/productAdminRoutes.js) compares the old and
+        // new `images` arrays and automatically deletes any old Cloudinary
+        // image whose publicId is no longer present — so replacing a photo
+        // here cleans up the old one server-side, no extra step needed.
         await updateProduct(id, payload);
       }
       navigate("/admin/products");
@@ -174,8 +200,9 @@ function AdminProductEditPage() {
 
         <label className="admin-label">
           Upload Image
-          <input className="admin-input" type="file" accept="image/*" onChange={handleImageUpload} />
+          <input className="admin-input" type="file" accept="image/*" onChange={handleImageUpload} disabled={uploading} />
         </label>
+        {uploading && <p style={{ fontSize: 13, color: "#777" }}>Uploading…</p>}
 
         {form.imageUrl && <img src={form.imageUrl} alt="Preview" className="admin-image-preview" />}
 
@@ -185,7 +212,7 @@ function AdminProductEditPage() {
           <button type="button" className="admin-btn" onClick={() => navigate("/admin/products")}>
             Cancel
           </button>
-          <button type="submit" className="admin-btn admin-btn--green">
+          <button type="submit" className="admin-btn admin-btn--green" disabled={uploading}>
             {isNew ? "Add Product" : "Save Changes"}
           </button>
         </div>

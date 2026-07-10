@@ -1,4 +1,5 @@
 const express = require("express");
+const mongoose = require("mongoose");
 const Cart = require("../models/Cart");
 const Product = require("../models/Product");
 
@@ -44,6 +45,16 @@ router.post("/", async (req, res) => {
 
     if (!userId && !guestId) {
       return res.status(400).json({ message: "userId or guestId is required" });
+    }
+
+    // A non-ObjectId productId (e.g. a SKU string like "VNECK-CLS-010")
+    // means this item was added while the frontend was in its offline/local
+    // demo mode. Return a clear error instead of letting Product.findById
+    // throw a raw Mongoose CastError below.
+    if (!mongoose.Types.ObjectId.isValid(productId)) {
+      return res.status(400).json({
+        message: "This item was added to your cart while offline. Please remove it and add it again.",
+      });
     }
 
     const product = await Product.findById(productId);

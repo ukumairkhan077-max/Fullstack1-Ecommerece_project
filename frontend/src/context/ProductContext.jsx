@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useCallback, useEffect, useRef } from "react";
 import seedProducts from "../services/product";
 import api from "../services/api";
+import { retryAsync } from "../services/retry";
 
 const ProductContext = createContext();
 
@@ -35,13 +36,17 @@ export function ProductProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const backendMode = useRef(false); // true once we've confirmed the API works
 
-  // On mount: try the real backend first, fall back to local/demo data.
+  // On mount: try the real backend first (retrying a few times, since a
+  // MongoDB cold-start can take a couple of seconds and we don't want a
+  // single slow first request to permanently lock the app into offline
+  // demo mode for the rest of the session). Falls back to local/demo data
+  // only after those retries are exhausted.
   useEffect(() => {
     let cancelled = false;
 
     async function load() {
       try {
-        const data = await api.getProducts();
+        const data = await retryAsync(() => api.getProducts());
         if (cancelled) return;
         if (Array.isArray(data)) {
           backendMode.current = true;
@@ -50,7 +55,7 @@ export function ProductProvider({ children }) {
           throw new Error("Unexpected response");
         }
       } catch {
-        // No backend running / reachable — use local demo data instead.
+        // Backend still unreachable after retries — use local demo data.
         backendMode.current = false;
         if (!cancelled) setProducts(loadLocalProducts());
       } finally {

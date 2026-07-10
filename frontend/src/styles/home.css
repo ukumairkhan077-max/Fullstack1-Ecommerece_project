@@ -2,7 +2,12 @@
 
 .hero-section{
     width:100%;
-    height:700px;
+    /* Matches the hero image's real aspect ratio (2400x1350 = 16:9), so
+       object-fit: cover only ever trims a sliver off the sides instead of
+       cropping the top/bottom — which is what was cutting the character
+       out of frame on smaller screens. */
+    aspect-ratio: 16 / 9;
+    height:auto;
     position:relative;
     overflow:hidden;
 }
@@ -11,6 +16,7 @@
     width:100%;
     height:100%;
     object-fit:cover;
+    object-position: center 20%;
     display:block;
 }
 
@@ -70,23 +76,23 @@
 }
 
 /* ================= RESPONSIVE ================= */
+/* Note: no more fixed `height` overrides here — aspect-ratio above keeps
+   the full hero image in view at every size. These breakpoints only need
+   to scale the overlay text/button down for smaller screens. */
 @media (max-width: 992px) {
-    .hero-section { height: 560px; }
     .hero-overlay h2 { font-size: 52px; }
     .hero-overlay p { font-size: 17px; margin-bottom: 26px; }
 }
 
 @media (max-width: 768px) {
-    .hero-section { height: 480px; }
     .hero-overlay { left: 6%; max-width: 90%; }
-    .hero-overlay h2 { font-size: 38px; margin-bottom: 14px; }
-    .hero-overlay p { font-size: 15px; line-height: 1.6; margin-bottom: 22px; }
-    .shop-btn { padding: 13px 30px; font-size: 15px; }
+    .hero-overlay h2 { font-size: 32px; margin-bottom: 12px; }
+    .hero-overlay p { font-size: 14px; line-height: 1.5; margin-bottom: 18px; }
+    .shop-btn { padding: 11px 26px; font-size: 14px; }
 }
 
 @media (max-width: 480px) {
-    .hero-section { height: 420px; }
-    .hero-overlay h2 { font-size: 28px; }
-    .hero-overlay p { font-size: 14px; }
-    .shop-btn { padding: 12px 24px; font-size: 14px; }
+    .hero-overlay h2 { font-size: 22px; margin-bottom: 8px; }
+    .hero-overlay p { font-size: 12px; margin-bottom: 14px; }
+    .shop-btn { padding: 9px 20px; font-size: 13px; }
 }

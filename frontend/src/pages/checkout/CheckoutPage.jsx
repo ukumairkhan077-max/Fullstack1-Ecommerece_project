@@ -1,14 +1,23 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Navigate, useLocation } from "react-router-dom";
 import Header from "../../components/common/header";
 import { useCart } from "../../context/CartContext";
 import { useOrder } from "../../context/OrderContext";
+import { useAuth } from "../../context/AuthContext";
 import "../../styles/checkout.css";
 
 function CheckoutPage() {
   const navigate = useNavigate();
-  const { cartItems, subtotal } = useCart();
-  const { saveCheckoutInfo, checkoutInfo } = useOrder();
+  const location = useLocation();
+  const { isAuthenticated } = useAuth();
+  const { cartItems, subtotal, clearCart, resyncWithBackend } = useCart();
+  const { saveCheckoutInfo, checkoutInfo, startBackendCheckout } = useOrder();
+
+  // Checkout requires a logged-in shopper. Send them to login and remember
+  // where they were headed, so they land back here after signing in.
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace state={{ from: location.pathname }} />;
+  }
 
   const [form, setForm] = useState({
     email: checkoutInfo?.email || "",
@@ -21,6 +30,7 @@ function CheckoutPage() {
     phone: checkoutInfo?.phone || "",
   });
   const [errors, setErrors] = useState({});
+  const [submitting, setSubmitting] = useState(false);
 
   const shipping = subtotal > 0 && subtotal < 100 ? 9.99 : 0;
   const total = subtotal + shipping;
@@ -60,11 +70,55 @@ function CheckoutPage() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleContinue = (e) => {
+  const [checkoutError, setCheckoutError] = useState("");
+
+  const handleContinue = async (e) => {
     e.preventDefault();
     if (!validate()) return;
+
     saveCheckoutInfo(form);
-    navigate("/checkout/payment");
+    setSubmitting(true);
+    setCheckoutError("");
+
+    // Self-heal first: if this tab got stuck in offline/local-demo mode
+    // earlier (e.g. it loaded during a slow backend cold-start) but the
+    // backend is reachable now, this looks up any stale cart items by SKU
+    // against the live catalog and swaps in their real MongoDB ids — so
+    // shoppers don't have to manually refresh the page or clear their cart
+    // just because the backend happened to still be starting up when they
+    // began shopping.
+    const freshItems = await resyncWithBackend();
+
+    // Try to create a real backend Checkout (requires login, which we've
+    // already guarded above). If the backend isn't reachable, this quietly
+    // does nothing — PaymentPage/OrderContext fall back to a fully local
+    // demo order instead. A real validation error from a reachable backend
+    // (e.g. a stale offline-mode cart item that couldn't be resolved above)
+    // is caught and shown here, and we do NOT continue to the payment page
+    // in that case.
+    try {
+      await startBackendCheckout({
+        items: freshItems.map((item) => ({
+          id: item.product.id,
+          name: item.product.name || item.product.title,
+          image: item.product.image || item.product.images?.[0]?.url || "",
+          price: item.product.finalPrice ?? item.product.price,
+          quantity: item.quantity,
+          size: item.size,
+          color: item.color,
+        })),
+        shippingAddress: form,
+        paymentMethod: "Pending",
+        itemsPrice: subtotal,
+        shippingPrice: shipping,
+        totalPrice: total,
+      });
+      navigate("/checkout/payment");
+    } catch (err) {
+      setCheckoutError(err.message || "Could not start checkout. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -148,8 +202,21 @@ function CheckoutPage() {
             </label>
           </section>
 
-          <button type="submit" className="checkout-continue-btn">
-            Continue to Payment
+          {checkoutError && (
+            <p className="ck-error" style={{ marginBottom: "12px" }}>
+              {checkoutError}{" "}
+              <button
+                type="button"
+                onClick={async () => { await clearCart(); navigate("/"); }}
+                style={{ textDecoration: "underline", color: "inherit", background: "none", border: "none", cursor: "pointer", padding: 0, font: "inherit" }}
+              >
+                Clear cart now
+              </button>
+            </p>
+          )}
+
+          <button type="submit" className="checkout-continue-btn" disabled={submitting}>
+            {submitting ? "Please wait…" : "Continue to Payment"}
           </button>
         </form>
 

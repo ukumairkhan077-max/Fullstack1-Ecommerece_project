@@ -5,7 +5,7 @@
 // this defaults to http://localhost:5000/api for local development.
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
-// Reads the JWT saved at login/register (see AdminAuthContext / AuthContext)
+// Reads the JWT saved at login/register (see AuthContext)
 function getToken() {
   try {
     return localStorage.getItem("rabbit_token");
@@ -44,6 +44,34 @@ async function request(path, { method = "GET", body, auth = false } = {}) {
   return data;
 }
 
+// Separate from request() because file uploads use multipart/form-data,
+// not JSON — the browser sets the correct Content-Type (with boundary)
+// automatically when we pass a FormData body, so we must NOT set our own.
+async function uploadRequest(path, formData) {
+  const headers = {};
+  const token = getToken();
+  if (token) headers.Authorization = `Bearer ${token}`;
+
+  const response = await fetch(`${API_URL}${path}`, {
+    method: "POST",
+    headers,
+    body: formData,
+  });
+
+  let data = null;
+  try {
+    data = await response.json();
+  } catch {
+    // ignore
+  }
+
+  if (!response.ok) {
+    throw new Error(data?.message || `Upload failed with status ${response.status}`);
+  }
+
+  return data;
+}
+
 export const api = {
   // ---- Users / Auth ----
   register: (payload) => request("/users/register", { method: "POST", body: payload }),
@@ -51,6 +79,7 @@ export const api = {
   getProfile: () => request("/users/profile", { auth: true }),
   getUsers: () => request("/users", { auth: true }),
   createUser: (payload) => request("/users", { method: "POST", body: payload, auth: true }),
+  updateUser: (id, payload) => request(`/users/${id}`, { method: "PUT", body: payload, auth: true }),
   updateUserRole: (id, role) => request(`/users/${id}/role`, { method: "PUT", body: { role }, auth: true }),
   deleteUser: (id) => request(`/users/${id}`, { method: "DELETE", auth: true }),
 
@@ -63,12 +92,37 @@ export const api = {
   updateProduct: (id, payload) => request(`/products/${id}`, { method: "PUT", body: payload, auth: true }),
   deleteProduct: (id) => request(`/products/${id}`, { method: "DELETE", auth: true }),
 
+  // ---- Product image upload (Cloudinary) ----
+  uploadImage: (file) => {
+    const formData = new FormData();
+    formData.append("image", file);
+    return uploadRequest("/upload", formData);
+  },
+  deleteImage: (publicId) => request(`/upload/${encodeURIComponent(publicId)}`, { method: "DELETE", auth: true }),
+
   // ---- Cart ----
   getCart: (query) => request(`/cart${query}`),
   addToCart: (payload) => request("/cart", { method: "POST", body: payload }),
   updateCartItem: (productId, payload) => request(`/cart/${productId}`, { method: "PUT", body: payload }),
   removeCartItem: (productId, payload) => request(`/cart/${productId}`, { method: "DELETE", body: payload }),
   clearCart: (payload) => request("/cart/clear", { method: "DELETE", body: payload }),
+
+  // ---- Checkout ----
+  createCheckout: (payload) => request("/checkout", { method: "POST", body: payload, auth: true }),
+  getCheckout: (id) => request(`/checkout/${id}`, { auth: true }),
+  payCheckout: (id, payload) => request(`/checkout/${id}/pay`, { method: "PUT", body: payload, auth: true }),
+  finalizeCheckout: (id) => request(`/checkout/${id}/finalize`, { method: "POST", auth: true }),
+
+  // ---- Orders ----
+  getMyOrders: () => request("/orders/mine", { auth: true }),
+  getOrder: (id) => request(`/orders/${id}`, { auth: true }),
+  getAllOrders: () => request("/orders", { auth: true }),
+  updateOrderStatus: (id, status) => request(`/orders/${id}/status`, { method: "PUT", body: { status }, auth: true }),
+  deleteOrder: (id) => request(`/orders/${id}`, { method: "DELETE", auth: true }),
+
+  // ---- Newsletter ----
+  subscribeNewsletter: (email) => request("/newsletter", { method: "POST", body: { email } }),
+  getSubscribers: () => request("/newsletter", { auth: true }),
 };
 
 export default api;

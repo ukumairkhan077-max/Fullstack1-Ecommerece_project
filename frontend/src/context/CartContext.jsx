@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useCallback, useEffect, useRef } from "react";
 import api from "../services/api";
 import { useAuth, getGuestId } from "./AuthContext";
+import { retryAsync } from "../services/retry";
 
 const CartContext = createContext();
 
@@ -42,8 +43,12 @@ export function CartProvider({ children }) {
   const identity = user ? { userId: user._id } : { guestId: getGuestId() };
 
   // (Re)load the cart from the backend whenever who-we-are changes
-  // (mount, login, logout). Falls back to an empty local-only cart if the
-  // backend isn't reachable, so the storefront still works without one.
+  // (mount, login, logout). Retries a few times first, since a MongoDB
+  // cold-start can take a couple of seconds — without this, a single slow
+  // request here could leave the cart in local-only mode for the rest of
+  // the session even though the backend (and ProductContext) come online
+  // moments later, which is exactly what caused cart items to end up with
+  // fake local IDs that a real checkout then rejected.
   useEffect(() => {
     let cancelled = false;
 
@@ -52,7 +57,7 @@ export function CartProvider({ children }) {
         const query = user
           ? `?userId=${user._id}`
           : `?guestId=${getGuestId()}`;
-        const cart = await api.getCart(query);
+        const cart = await retryAsync(() => api.getCart(query));
         if (cancelled) return;
         backendMode.current = true;
         setCartItems(normalizeBackendCart(cart));
@@ -137,6 +142,69 @@ export function CartProvider({ children }) {
     }
   }, [identity]);
 
+  // Self-heals a cart that got "stuck" in local/offline mode — e.g. if the
+  // very first page load raced a slow backend/DB cold-start and this tab
+  // decided (once, at mount) to run in offline demo mode. Rather than
+  // requiring a manual page refresh, this re-checks the real backend right
+  // before checkout and, if it's reachable now, looks up each stale item
+  // (identified by a non-ObjectId product id — a local demo id is the
+  // product's SKU) against the live catalog by SKU and swaps in the real
+  // MongoDB id, price, and image. Also best-effort pushes the corrected
+  // items into the real backend cart so future loads stay in sync.
+  // Returns the corrected item list to use immediately (state updates
+  // don't apply until the next render, so callers shouldn't rely on
+  // `cartItems` right after calling this — use the return value instead).
+  const resyncWithBackend = useCallback(async () => {
+    const isValidObjectId = (id) => /^[a-f\d]{24}$/i.test(String(id));
+    const alreadyFine = cartItems.every((item) => isValidObjectId(item.product.id));
+    if (backendMode.current && alreadyFine) return cartItems;
+
+    let liveProducts;
+    try {
+      liveProducts = await api.getProducts();
+      if (!Array.isArray(liveProducts)) return cartItems;
+    } catch {
+      return cartItems; // still genuinely offline — nothing more we can do
+    }
+
+    backendMode.current = true;
+
+    const bySku = new Map(liveProducts.map((p) => [p.sku, p]));
+    let changed = false;
+
+    const resolved = cartItems.map((item) => {
+      if (isValidObjectId(item.product.id)) return item;
+      const match = bySku.get(item.product.id) || bySku.get(item.product.sku);
+      if (!match) return item; // can't resolve (e.g. product was deleted) — leave as-is
+      changed = true;
+      const price = match.discountPrice || match.price;
+      return {
+        ...item,
+        product: {
+          ...item.product,
+          id: match._id,
+          image: match.images?.[0]?.url || item.product.image,
+          price,
+          finalPrice: price,
+        },
+      };
+    });
+
+    if (changed) {
+      setCartItems(resolved);
+      // Best-effort: mirror the corrected items into the real backend cart
+      await Promise.all(
+        resolved.map((item) =>
+          api
+            .addToCart({ ...identity, productId: item.product.id, quantity: item.quantity, size: item.size, color: item.color })
+            .catch(() => null)
+        )
+      );
+    }
+
+    return resolved;
+  }, [cartItems, identity]);
+
   const totalQuantity = cartItems.reduce((s, i) => s + i.quantity, 0);
   const subtotal = cartItems.reduce(
     (s, i) => s + (i.product.finalPrice ?? i.product.price) * i.quantity, 0
@@ -146,6 +214,7 @@ export function CartProvider({ children }) {
     <CartContext.Provider value={{
       cartItems, isDrawerOpen, openDrawer, closeDrawer,
       addToCart, removeItem, increaseQuantity, decreaseQuantity, clearCart,
+      resyncWithBackend,
       totalQuantity, subtotal,
     }}>
       {children}

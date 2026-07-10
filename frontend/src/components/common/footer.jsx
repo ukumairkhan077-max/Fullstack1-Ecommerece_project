@@ -1,7 +1,35 @@
+import { useState } from "react";
 import facebook from "../../assets/images/facebook.svg";
 import instagram from "../../assets/images/instagram.svg";
 import twitter from "../../assets/images/twitter.svg";
+import api from "../../services/api";
+
 function Footer() {
+  const [email, setEmail] = useState("");
+  const [status, setStatus] = useState(null); // null | "loading" | "success" | "error"
+  const [message, setMessage] = useState("");
+
+  const handleSubscribe = async (e) => {
+    e.preventDefault();
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setStatus("error");
+      setMessage("Please enter a valid email address.");
+      return;
+    }
+
+    setStatus("loading");
+    try {
+      await api.subscribeNewsletter(email);
+      setStatus("success");
+      setMessage("Thanks for subscribing! 🎉");
+      setEmail("");
+    } catch (err) {
+      setStatus("error");
+      setMessage(err.message || "Could not subscribe right now. Please try again.");
+    }
+  };
+
   return (
     <footer className="footer">
 
@@ -20,14 +48,29 @@ function Footer() {
 
           <p>Sign up and get 10% off your first order.</p>
 
-          <div className="subscribe-box">
+          <form className="subscribe-box" onSubmit={handleSubscribe}>
             <input
               type="email"
               placeholder="Enter your email"
+              value={email}
+              onChange={(e) => { setEmail(e.target.value); setStatus(null); }}
+              disabled={status === "loading"}
             />
 
-            <button>Subscribe</button>
-          </div>
+            <button type="submit" disabled={status === "loading"}>
+              {status === "loading" ? "..." : "Subscribe"}
+            </button>
+          </form>
+
+          {message && (
+            <p style={{
+              fontSize: "13px",
+              marginTop: "8px",
+              color: status === "success" ? "#16a34a" : "#e5391c",
+            }}>
+              {message}
+            </p>
+          )}
 
         </div>
 

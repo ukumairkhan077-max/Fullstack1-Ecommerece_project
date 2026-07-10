@@ -1,31 +1,48 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useProducts } from "../../context/ProductContext";
+import { useCart } from "../../context/CartContext";
 
 const BestSeller = () => {
-  const { products } = useProducts();
+  const { products, loading } = useProducts();
+  const { addToCart } = useCart();
 
-  // Random Product
-  const [product] = useState(() => {
-    if (!products || products.length === 0) return null;
-    return products[Math.floor(Math.random() * products.length)];
-  });
-
-  // States (initialized from the product directly, since product never
-  // changes after the first render)
-  const [selectedImage, setSelectedImage] = useState(
-    () => product?.images?.[0]?.url ?? ""
-  );
-  const [selectedSize, setSelectedSize] = useState(
-    () => product?.sizes?.[0] ?? ""
-  );
-  const [selectedColor, setSelectedColor] = useState(
-    () => product?.colors?.[0] ?? ""
-  );
+  const [product, setProduct] = useState(null);
+  const [selectedImage, setSelectedImage] = useState("");
+  const [selectedSize, setSelectedSize] = useState("");
+  const [selectedColor, setSelectedColor] = useState("");
   const [quantity, setQuantity] = useState(1);
+  const [added, setAdded] = useState(false);
 
-  // Prevent crashes if no product exists
+  // Pick a random product once the (async) product list has actually
+  // loaded. Doing this in an effect — instead of a useState initializer —
+  // is what fixes the "Product Not Found" flash: the initializer used to
+  // run on the very first render, before ProductContext had finished
+  // fetching, so `products` was still `[]` and this froze on `null` forever.
+  useEffect(() => {
+    if (loading || !products || products.length === 0) return;
+    const pick = products[Math.floor(Math.random() * products.length)];
+    setProduct(pick);
+    setSelectedImage(pick?.images?.[0]?.url ?? "");
+    setSelectedSize(pick?.sizes?.[0] ?? "");
+    setSelectedColor(pick?.colors?.[0] ?? "");
+  }, [products, loading]);
+
+  if (loading) {
+    return (
+      <section className="bestSeller">
+        <h2 className="bestSellerTitle">Best Seller</h2>
+        <p style={{ textAlign: "center", color: "#777" }}>Loading…</p>
+      </section>
+    );
+  }
+
   if (!product) {
-    return <h2>No Product Found</h2>;
+    return (
+      <section className="bestSeller">
+        <h2 className="bestSellerTitle">Best Seller</h2>
+        <p style={{ textAlign: "center", color: "#777" }}>No products available yet.</p>
+      </section>
+    );
   }
 
   // Quantity Functions
@@ -39,6 +56,23 @@ const BestSeller = () => {
     if (quantity > 1) {
       setQuantity(quantity - 1);
     }
+  };
+
+  const handleAddToCart = () => {
+    addToCart(
+      {
+        id: product.id,
+        name: product.name,
+        image: product.images?.[0]?.url || "",
+        price: product.discountPrice || product.price,
+        finalPrice: product.discountPrice || product.price,
+      },
+      quantity,
+      selectedSize,
+      selectedColor
+    );
+    setAdded(true);
+    setTimeout(() => setAdded(false), 1500);
   };
 
   return (
@@ -84,12 +118,14 @@ const BestSeller = () => {
 
           <div className="price">
             <span className="currentPrice">
-              ${product.discountPrice}
+              ${product.discountPrice || product.price}
             </span>
 
-            <span className="oldPrice">
-              ${product.price}
-            </span>
+            {product.discountPrice && (
+              <span className="oldPrice">
+                ${product.price}
+              </span>
+            )}
           </div>
 
           <p className="description">
@@ -206,17 +242,10 @@ const BestSeller = () => {
           {/* ADD TO CART */}
 
           <button
-            className="cartBtn"
-            onClick={() =>
-              console.log({
-                product,
-                quantity,
-                selectedColor,
-                selectedSize,
-              })
-            }
+            className={`cartBtn ${added ? "cartBtn--added" : ""}`}
+            onClick={handleAddToCart}
           >
-            ADD TO CART
+            {added ? "ADDED ✓" : "ADD TO CART"}
           </button>
 
         </div>

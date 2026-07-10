@@ -2,7 +2,7 @@ import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 
 function AdminSidebar({ mobileOpen, onClose }) {
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -27,8 +27,21 @@ function AdminSidebar({ mobileOpen, onClose }) {
         <NavLink to="/admin/users" className={navClass} onClick={onClose}>👤 Users</NavLink>
         <NavLink to="/admin/products" className={navClass} onClick={onClose}>🏷️ Products</NavLink>
         <NavLink to="/admin/orders" className={navClass} onClick={onClose}>📦 Orders</NavLink>
+        <NavLink to="/admin/newsletter" className={navClass} onClick={onClose}>✉️ Newsletter</NavLink>
         <NavLink to="/" className={navClass} onClick={onClose}>🏠 Shop</NavLink>
       </nav>
+
+      {user && (
+        <div className="admin-sidebar__account">
+          <div className="admin-sidebar__account-avatar">
+            {(user.name || "?").charAt(0).toUpperCase()}
+          </div>
+          <div className="admin-sidebar__account-info">
+            <p className="admin-sidebar__account-name">{user.name}</p>
+            <p className="admin-sidebar__account-email">{user.email}</p>
+          </div>
+        </div>
+      )}
 
       <button className="admin-logout-btn" onClick={handleLogout}>
         ⏻ Logout

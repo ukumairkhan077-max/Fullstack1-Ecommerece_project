@@ -179,6 +179,39 @@ router.post("/", protect, admin, async (req, res) => {
   }
 });
 
+// @route   PUT /api/users/:id
+// @desc    Update any of a user's info (name, email, role, and optionally
+//          password). This is the general-purpose "edit user" endpoint —
+//          PUT /api/users/:id/role below is kept as a quick shortcut for
+//          just toggling a role from the admin table.
+// @access  Private/Admin
+router.put("/:id", protect, admin, async (req, res) => {
+  try {
+    const { name, email, role, password } = req.body;
+
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    if (email && email.toLowerCase().trim() !== user.email) {
+      const emailTaken = await User.findOne({ email: email.toLowerCase().trim() });
+      if (emailTaken) {
+        return res.status(400).json({ message: "That email is already in use by another user" });
+      }
+      user.email = email.toLowerCase().trim();
+    }
+
+    if (name) user.name = name;
+    if (role && ["customer", "admin"].includes(role)) user.role = role;
+    if (password) user.password = password; // re-hashed automatically by the pre-save hook
+
+    const updated = await user.save();
+
+    res.json({ _id: updated._id, name: updated.name, email: updated.email, role: updated.role });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 // @route   PUT /api/users/:id/role
 // @desc    Change a user's role (customer <-> admin)
 // @access  Private/Admin

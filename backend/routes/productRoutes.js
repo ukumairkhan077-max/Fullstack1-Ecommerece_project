@@ -1,6 +1,5 @@
 const express = require("express");
 const Product = require("../models/Product");
-const { protect, admin } = require("../middleware/authMiddleware");
 
 const router = express.Router();
 
@@ -8,6 +7,9 @@ const router = express.Router();
 // otherwise swallow requests to "/bestsellers" and "/new-arrivals" (treating
 // those words as an :id). That's why those two specific routes are declared
 // BEFORE the generic "/:id" route below.
+//
+// All admin-only product routes (create/update/delete) now live in
+// routes/productAdminRoutes.js — this file only has public, read-only routes.
 
 // @route   GET /api/products/bestsellers
 // @desc    Return the highest-rated products
@@ -85,56 +87,6 @@ router.get("/:id", async (req, res) => {
       return res.status(404).json({ message: "Product not found" });
     }
     res.json(product);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
-
-// @route   POST /api/products
-// @desc    Create a new product
-// @access  Private/Admin
-router.post("/", protect, admin, async (req, res) => {
-  try {
-    const product = await Product.create({
-      ...req.body,
-      user: req.user._id,
-    });
-    res.status(201).json(product);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
-
-// @route   PUT /api/products/:id
-// @desc    Update an existing product
-// @access  Private/Admin
-router.put("/:id", protect, admin, async (req, res) => {
-  try {
-    const product = await Product.findById(req.params.id);
-    if (!product) {
-      return res.status(404).json({ message: "Product not found" });
-    }
-
-    Object.assign(product, req.body);
-    const updatedProduct = await product.save();
-    res.json(updatedProduct);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-});
-
-// @route   DELETE /api/products/:id
-// @desc    Delete a product
-// @access  Private/Admin
-router.delete("/:id", protect, admin, async (req, res) => {
-  try {
-    const product = await Product.findById(req.params.id);
-    if (!product) {
-      return res.status(404).json({ message: "Product not found" });
-    }
-
-    await product.deleteOne();
-    res.json({ message: "Product removed" });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
