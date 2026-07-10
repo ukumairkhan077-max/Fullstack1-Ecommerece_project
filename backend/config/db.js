@@ -2,9 +2,19 @@ const mongoose = require("mongoose");
 
 /**
  * Connects to MongoDB using the connection string from .env (MONGO_URI).
- * Called once from server.js when the app starts.
+ * Called from server.js when the app starts.
+ *
+ * Guards against reconnecting when a connection already exists — this
+ * matters most on Vercel/serverless, where a "warm" function invocation
+ * reuses the same Node process (and this module's state) as the previous
+ * request, so without this check every request would try to open a brand
+ * new connection and could exhaust MongoDB Atlas's connection limit.
  */
 const connectDB = async () => {
+  if (mongoose.connection.readyState === 1) {
+    return; // already connected — reuse it
+  }
+
   try {
     if (!process.env.MONGO_URI) {
       console.warn(

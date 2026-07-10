@@ -81,8 +81,14 @@ app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
-});
+// Vercel runs this app as a serverless function (see api/index.js) — it
+// calls the exported `app` directly per-request instead of a long-running
+// process, so app.listen() would be pointless (and Vercel sets the VERCEL
+// env var automatically, which is how we detect this).
+if (!process.env.VERCEL) {
+  app.listen(PORT, () => {
+    console.log(`🚀 Server running on http://localhost:${PORT}`);
+  });
+}
 
 module.exports = app;
