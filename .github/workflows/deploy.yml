@@ -35,6 +35,8 @@ jobs:
       - name: Build
         working-directory: frontend
         run: npm run build
+        env:
+          VITE_API_URL: ${{ secrets.VITE_API_URL }}
 
       # GitHub Pages serves static files only — there's no server to fall
       # back to index.html for client-side routes like /collection/men on a
