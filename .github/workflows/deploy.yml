@@ -36,6 +36,13 @@ jobs:
         working-directory: frontend
         run: npm run build
         env:
+          # Set this in your repo's Settings → Secrets and variables →
+          # Actions → New repository secret, named exactly VITE_API_URL,
+          # with your deployed backend's URL + "/api"
+          # (e.g. https://fullstack1-ecommerece-project.vercel.app/api).
+          # Without this secret set, the frontend falls back to
+          # http://localhost:5000/api (see frontend/src/services/api.js),
+          # which only works when you're running the backend locally.
           VITE_API_URL: ${{ secrets.VITE_API_URL }}
 
       # GitHub Pages serves static files only — there's no server to fall
