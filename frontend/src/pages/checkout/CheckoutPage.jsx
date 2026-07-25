@@ -13,12 +13,8 @@ function CheckoutPage() {
   const { cartItems, subtotal, clearCart, resyncWithBackend } = useCart();
   const { saveCheckoutInfo, checkoutInfo, startBackendCheckout } = useOrder();
 
-  // Checkout requires a logged-in shopper. Send them to login and remember
-  // where they were headed, so they land back here after signing in.
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace state={{ from: location.pathname }} />;
-  }
-
+  // All hooks must run on every render, in the same order — so they all
+  // live here, before any conditional early return below.
   const [form, setForm] = useState({
     email: checkoutInfo?.email || "",
     firstName: checkoutInfo?.firstName || "",
@@ -31,9 +27,16 @@ function CheckoutPage() {
   });
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
+  const [checkoutError, setCheckoutError] = useState("");
 
   const shipping = subtotal > 0 && subtotal < 100 ? 9.99 : 0;
   const total = subtotal + shipping;
+
+  // Checkout requires a logged-in shopper. Send them to login and remember
+  // where they were headed, so they land back here after signing in.
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace state={{ from: location.pathname }} />;
+  }
 
   // Redirect if cart is empty
   if (cartItems.length === 0) {
@@ -69,8 +72,6 @@ function CheckoutPage() {
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
-
-  const [checkoutError, setCheckoutError] = useState("");
 
   const handleContinue = async (e) => {
     e.preventDefault();
