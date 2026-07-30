@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { useProducts } from "../../context/ProductContext";
 
 function AdminProductsPage() {
-  const { products, deleteProduct } = useProducts();
+  const { products, deleteProduct, loading: catalogueLoading, error: catalogueError } = useProducts();
   const [error, setError] = useState("");
 
   const handleDelete = async (product) => {
@@ -24,8 +24,11 @@ function AdminProductsPage() {
       </div>
 
       {error && <p className="admin-error">{error}</p>}
+      {catalogueError && <p className="admin-error">{catalogueError}</p>}
 
-      {products.length === 0 ? (
+      {catalogueLoading ? (
+        <p className="admin-empty">Loading products…</p>
+      ) : products.length === 0 ? (
         <p className="admin-empty">No products found.</p>
       ) : (
         <div className="admin-table-wrap">

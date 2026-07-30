@@ -7,11 +7,23 @@ function AdminOrdersPage() {
   const { orders, updateOrderStatus, deleteOrder, refreshOrders } = useOrder();
   const [expandedId, setExpandedId] = useState(null);
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(true);
 
   // Re-fetch from the real backend now that we know an admin is logged in
-  // (GET /api/orders requires an admin JWT).
+  // (GET /api/orders requires an admin JWT). There is no local order cache
+  // to fall back to, so a failed refresh is shown to the admin directly.
   useEffect(() => {
-    refreshOrders();
+    let cancelled = false;
+    (async () => {
+      try {
+        await refreshOrders();
+      } catch (err) {
+        if (!cancelled) setError(err.message || "Could not load orders. Please try again later.");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -24,13 +36,23 @@ function AdminOrdersPage() {
     }
   };
 
+  const handleStatusChange = async (orderId, status) => {
+    try {
+      await updateOrderStatus(orderId, status);
+    } catch (err) {
+      setError(err.message || "Could not update this order's status.");
+    }
+  };
+
   return (
     <div className="admin-page">
       <h1 className="admin-page-title">Order Management</h1>
 
       {error && <p className="admin-error">{error}</p>}
 
-      {orders.length === 0 ? (
+      {loading ? (
+        <p className="admin-empty">Loading orders…</p>
+      ) : orders.length === 0 ? (
         <p className="admin-empty">No orders yet. Orders placed through checkout will show up here.</p>
       ) : (
         <div className="admin-table-wrap">
@@ -62,7 +84,7 @@ function AdminOrdersPage() {
                     <select
                       className="admin-input admin-input--sm"
                       value={o.status}
-                      onChange={(e) => updateOrderStatus(o.orderId, e.target.value)}
+                      onChange={(e) => handleStatusChange(o.orderId, e.target.value)}
                     >
                       {STATUS_OPTIONS.map((s) => (
                         <option key={s} value={s}>{s}</option>
@@ -73,7 +95,7 @@ function AdminOrdersPage() {
                     <button
                       className="admin-btn admin-btn--green admin-btn--sm"
                       disabled={o.status === "Delivered"}
-                      onClick={() => updateOrderStatus(o.orderId, "Delivered")}
+                      onClick={() => handleStatusChange(o.orderId, "Delivered")}
                     >
                       Mark as Delivered
                     </button>

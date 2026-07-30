@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useUsers } from "../../context/UserContext";
 
 function AdminUsersPage() {
-  const { users, addUser, deleteUser, updateUser, updateUserRole, refreshUsers } = useUsers();
+  const { users, addUser, deleteUser, updateUser, updateUserRole, refreshUsers, loading, error: loadError } = useUsers();
 
   // Re-fetch from the backend now that we know an admin is logged in
   // (the GET /api/users endpoint requires an admin JWT).
@@ -139,6 +139,9 @@ function AdminUsersPage() {
       {editError && <p className="admin-error">{editError}</p>}
 
       <div className="admin-table-wrap">
+      {loading && <p className="admin-empty">Loading users…</p>}
+      {loadError && <p className="admin-error">{loadError}</p>}
+      {!loading && !loadError && (
       <table className="admin-table">
         <thead>
           <tr>
@@ -212,6 +215,7 @@ function AdminUsersPage() {
           })}
         </tbody>
       </table>
+      )}
       </div>
     </div>
   );
