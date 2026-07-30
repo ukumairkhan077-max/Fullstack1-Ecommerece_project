@@ -6,7 +6,7 @@ function CartDrawer() {
   const navigate = useNavigate();
   const {
     cartItems, isDrawerOpen, closeDrawer,
-    removeItem, increaseQuantity, decreaseQuantity, subtotal,
+    removeItem, increaseQuantity, decreaseQuantity, subtotal, error,
   } = useCart();
 
   const handleCheckout = () => {
@@ -38,6 +38,12 @@ function CartDrawer() {
           </h2>
           <button className="cart-drawer__close" onClick={closeDrawer}>✕</button>
         </div>
+
+        {error && (
+          <p className="cart-drawer__error" style={{ color: "#e5391c", fontSize: "13px", padding: "0 20px" }}>
+            {error}
+          </p>
+        )}
 
         {/* Items */}
         <div className="cart-drawer__body">
@@ -87,7 +93,7 @@ function CartDrawer() {
                   </div>
                   <button
                     className="cart-item__remove"
-                    onClick={() => removeItem(item.key)}
+                    onClick={() => removeItem(item.key).catch(() => {})}
                     title="Remove"
                   >🗑</button>
                 </div>
