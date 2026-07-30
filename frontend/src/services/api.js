@@ -77,6 +77,7 @@ export const api = {
   register: (payload) => request("/users/register", { method: "POST", body: payload }),
   login: (payload) => request("/users/login", { method: "POST", body: payload }),
   getProfile: () => request("/users/profile", { auth: true }),
+  updateProfile: (payload) => request("/users/profile", { method: "PUT", body: payload, auth: true }),
   getUsers: () => request("/users", { auth: true }),
   createUser: (payload) => request("/users", { method: "POST", body: payload, auth: true }),
   updateUser: (id, payload) => request(`/users/${id}`, { method: "PUT", body: payload, auth: true }),
