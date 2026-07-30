@@ -46,27 +46,9 @@ function PaymentPage() {
   const activeMethod = PAYMENT_METHODS.find(m => m.id === method);
 
   const finalizeOrder = async (paymentMethod, transactionId) => {
-    const items = cartItems.map(item => ({
-      id: item.product.id,
-      name: item.product.name || item.product.title,
-      image: item.product.image || item.product.images?.[0]?.url || "",
-      price: item.product.finalPrice ?? item.product.price,
-      quantity: item.quantity,
-      size: item.size,
-      color: item.color,
-    }));
-
     setProcessing(true);
     try {
-      await createOrder({
-        items,
-        subtotal,
-        shipping,
-        total,
-        paymentMethod,
-        transactionId,
-        customer: `${checkoutInfo.firstName || ""} ${checkoutInfo.lastName || ""}`.trim() || "Guest",
-      });
+      await createOrder({ paymentMethod, transactionId });
       await clearCart();
       navigate("/order-confirmation");
     } catch (err) {

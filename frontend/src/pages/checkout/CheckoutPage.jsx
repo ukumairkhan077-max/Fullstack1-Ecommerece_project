@@ -9,9 +9,9 @@ import "../../styles/checkout.css";
 function CheckoutPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { isAuthenticated } = useAuth();
-  const { cartItems, subtotal, clearCart, resyncWithBackend } = useCart();
-  const { saveCheckoutInfo, checkoutInfo, startBackendCheckout } = useOrder();
+  const { isAuthenticated, initializing } = useAuth();
+  const { cartItems, subtotal, clearCart } = useCart();
+  const { saveCheckoutInfo, checkoutInfo, startCheckout } = useOrder();
 
   // All hooks must run on every render, in the same order — so they all
   // live here, before any conditional early return below.
@@ -31,6 +31,21 @@ function CheckoutPage() {
 
   const shipping = subtotal > 0 && subtotal < 100 ? 9.99 : 0;
   const total = subtotal + shipping;
+
+  // Wait until AuthContext has finished checking the saved token against
+  // the backend before deciding whether to redirect — otherwise a logged-in
+  // shopper refreshing this page would be briefly (and incorrectly) bounced
+  // to /login before their session comes back from the server.
+  if (initializing) {
+    return (
+      <>
+        <Header />
+        <div className="checkout-empty">
+          <p>Loading…</p>
+        </div>
+      </>
+    );
+  }
 
   // Checkout requires a logged-in shopper. Send them to login and remember
   // where they were headed, so they land back here after signing in.
@@ -81,25 +96,14 @@ function CheckoutPage() {
     setSubmitting(true);
     setCheckoutError("");
 
-    // Self-heal first: if this tab got stuck in offline/local-demo mode
-    // earlier (e.g. it loaded during a slow backend cold-start) but the
-    // backend is reachable now, this looks up any stale cart items by SKU
-    // against the live catalog and swaps in their real MongoDB ids — so
-    // shoppers don't have to manually refresh the page or clear their cart
-    // just because the backend happened to still be starting up when they
-    // began shopping.
-    const freshItems = await resyncWithBackend();
-
-    // Try to create a real backend Checkout (requires login, which we've
-    // already guarded above). If the backend isn't reachable, this quietly
-    // does nothing — PaymentPage/OrderContext fall back to a fully local
-    // demo order instead. A real validation error from a reachable backend
-    // (e.g. a stale offline-mode cart item that couldn't be resolved above)
-    // is caught and shown here, and we do NOT continue to the payment page
-    // in that case.
+    // Create the real backend Checkout. Cart items always carry a real
+    // MongoDB product id at this point, since the cart is only ever
+    // populated from the backend. Any error here (validation failure,
+    // server unavailable, etc.) is caught below and shown to the shopper —
+    // there is no local/offline order path to fall back to.
     try {
-      await startBackendCheckout({
-        items: freshItems.map((item) => ({
+      await startCheckout({
+        items: cartItems.map((item) => ({
           id: item.product.id,
           name: item.product.name || item.product.title,
           image: item.product.image || item.product.images?.[0]?.url || "",
