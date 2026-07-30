@@ -132,6 +132,37 @@ router.get("/profile", protect, async (req, res) => {
   res.json(req.user);
 });
 
+// @route   PUT /api/users/profile
+// @desc    Update the currently logged-in user's own profile (name, email,
+//          and optionally password). Every change is written straight to
+//          MongoDB — there is no client-side cache of this data.
+// @access  Private
+router.put("/profile", protect, async (req, res) => {
+  try {
+    const { name, email, password } = req.body;
+
+    const user = await User.findById(req.user._id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    if (email && email.toLowerCase().trim() !== user.email) {
+      const emailTaken = await User.findOne({ email: email.toLowerCase().trim() });
+      if (emailTaken) {
+        return res.status(400).json({ message: "That email is already in use by another account" });
+      }
+      user.email = email.toLowerCase().trim();
+    }
+
+    if (name) user.name = name;
+    if (password) user.password = password; // re-hashed automatically by the pre-save hook
+
+    const updated = await user.save();
+
+    res.json({ _id: updated._id, name: updated.name, email: updated.email, role: updated.role });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 // @route   GET /api/users
 // @desc    List all users (used by the Admin > User Management page)
 // @access  Private/Admin

@@ -2,50 +2,73 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import Header from "../components/common/header";
 import Footer from "../components/common/footer";
-import ProductDetail from "../components/product/productdetail";
 import LocalProductDetail from "../components/product/LocalProductDetail";
 import { useProducts } from "../context/ProductContext";
+import api from "../services/api";
 
 const ProductPage = () => {
   const { id } = useParams();
-  const { products: localProducts } = useProducts();
+  const { getProduct, loading: catalogueLoading } = useProducts();
 
-  // Check if this is a local product (SKU) or a FakeStore numeric ID
-  const localProduct = localProducts.find(p => p.sku === id || p.id === id);
+  // Prefer whatever's already loaded in the shared catalogue (fast path —
+  // no extra request). If it isn't there yet (e.g. this product was opened
+  // directly via a link before the full catalogue finished loading), fetch
+  // it individually straight from the backend by its real MongoDB id.
+  const cachedProduct = getProduct(id);
 
-  const [remoteProduct, setRemoteProduct] = useState(null);
-  const [loading, setLoading] = useState(!localProduct);
+  const [fetchedProduct, setFetchedProduct] = useState(null);
+  const [fetching, setFetching] = useState(!cachedProduct);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    if (localProduct) return; // no need to fetch
+    if (cachedProduct || catalogueLoading) return;
 
-    async function fetchProduct() {
-      try {
-        const response = await fetch(`https://fakestoreapi.com/products/${id}`);
-        const data = await response.json();
-        setRemoteProduct(data);
-      } catch (error) {
-        console.log(error);
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchProduct();
-  }, [id, localProduct]);
+    let cancelled = false;
+    setFetching(true);
+    setError("");
 
-  if (localProduct) {
-    return <LocalProductDetail product={localProduct} />;
+    api.getProduct(id)
+      .then((data) => {
+        if (cancelled) return;
+        setFetchedProduct({ ...data, id: data._id || data.id });
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        setError(err.message || "Could not load this product.");
+      })
+      .finally(() => {
+        if (!cancelled) setFetching(false);
+      });
+
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, cachedProduct, catalogueLoading]);
+
+  const product = cachedProduct || fetchedProduct;
+
+  if (product) {
+    return <LocalProductDetail product={product} />;
   }
 
-  if (loading) {
-    return <h2 style={{ textAlign: "center", marginTop: "120px" }}>Loading Product...</h2>;
+  if (catalogueLoading || fetching) {
+    return (
+      <>
+        <Header />
+        <h2 style={{ textAlign: "center", marginTop: "120px" }}>Loading Product...</h2>
+        <Footer />
+      </>
+    );
   }
 
-  if (!remoteProduct) {
-    return <h2 style={{ textAlign: "center", marginTop: "120px" }}>Product Not Found</h2>;
-  }
-
-  return <ProductDetail product={remoteProduct} />;
+  return (
+    <>
+      <Header />
+      <h2 style={{ textAlign: "center", marginTop: "120px" }}>
+        {error || "Product Not Found"}
+      </h2>
+      <Footer />
+    </>
+  );
 };
 
 export default ProductPage;
