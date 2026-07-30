@@ -12,21 +12,27 @@ const LocalProductDetail = ({ product }) => {
   const [selectedSize,  setSelectedSize]  = useState(product.sizes?.[0] || "");
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
+  const [addError, setAddError] = useState("");
 
   const increaseQuantity = () => setQuantity(p => p + 1);
   const decreaseQuantity = () => { if (quantity > 1) setQuantity(p => p - 1); };
 
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
     const normalised = {
       ...product,
-      id:         product.sku,
+      id:         product.id,
       name:       product.name,
       image:      images[0]?.url || "",
       finalPrice: product.discountPrice || product.price,
     };
-    addToCart(normalised, quantity, selectedSize, selectedColor);
-    setAdded(true);
-    setTimeout(() => setAdded(false), 1500);
+    setAddError("");
+    try {
+      await addToCart(normalised, quantity, selectedSize, selectedColor);
+      setAdded(true);
+      setTimeout(() => setAdded(false), 1500);
+    } catch (err) {
+      setAddError(err.message || "Could not add this item to your cart.");
+    }
   };
 
   const displayPrice   = product.discountPrice || product.price;
@@ -130,6 +136,10 @@ const LocalProductDetail = ({ product }) => {
               </div>
               <div className="characteristicRow"><span>Rating</span><span>⭐ {product.rating} ({product.numReviews})</span></div>
             </div>
+
+            {addError && (
+              <p style={{ color: "#e5391c", fontSize: "13px", marginTop: "-4px" }}>{addError}</p>
+            )}
 
             <button className={`cartBtn ${added ? "cartBtn--added" : ""}`} onClick={handleAddToCart}>
               {added ? "✓ ADDED TO CART" : "ADD TO CART"}
